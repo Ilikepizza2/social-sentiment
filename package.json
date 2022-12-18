@@ -1,0 +1,30 @@
+{
+  "name": "social-sentiment",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ilikepizza2/social-sentiment.git"
+  },
+  "keywords": [
+    "social-sentiment"
+  ],
+  "author": "Ilikepizza2",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Ilikepizza2/social-sentiment/issues"
+  },
+  "homepage": "https://github.com/Ilikepizza2/social-sentiment#readme",
+  "dependencies": {
+    "apos-to-lex-form": "^1.0.5",
+    "axios": "^1.2.1",
+    "express": "^4.18.2",
+    "natural": "^5.2.4",
+    "spelling-corrector": "^3.0.0",
+    "stopword": "^2.0.5"
+  }
+}
