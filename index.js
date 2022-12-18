@@ -1,143 +1,89 @@
-// create an express app
-const express = require('express')
-const axios = require('axios')
-const aposToLexForm = require('apos-to-lex-form')
-const natural = require('natural')
-const spell_check = require('spelling-corrector')
-const stopWords = require('stopword')
+const axios = require("axios");
+const natural = require("natural");
+const stopWords = require("stopword");
+const spell_check = require("spelling-corrector");
+const aposToLexForm = require("apos-to-lex-form");
 
-const app = express()
-const port = 3000
+const spellCheck = new spell_check();
+spellCheck.loadDictionary();
 
-const spellCheck = new spell_check()
-spellCheck.loadDictionary()
+async function getSentiment(query, url){
+  const response = async () => {
+    try{
+      await axios.get(url, {headers: {"Accept-Encoding": "gzip,deflate,compress"}});
+      const texts = response.data.map((post) => post.title);
+      const lexedTexts = texts.map((text) => aposToLexForm(text));
+      const casedTexts = lexedTexts.map((text) => text.toLowerCase());
+      const alphaOnlyTexts = casedTexts.map((text) => text.replace(/[^a-zA-Z\s]+/g, ""));
+      // console.table(alphaOnlyTexts)
+      const { WordTokenizer } = natural;
+      const tokenizer = new WordTokenizer();
+      const tokenizedTexts = alphaOnlyTexts.map((text) => tokenizer.tokenize(text));
+      tokenizedTexts.map((text) => text.map((word) => spellCheck.correct(word)));
+      const noStopWordsTexts = tokenizedTexts.map((text) => stopWords.removeStopwords(text));
+      var avgAnalysis = 0;
+      const analyzer = new natural.SentimentAnalyzer("English", natural.PorterStemmer, "afinn");
+      noStopWordsTexts.forEach((text) => {
+        const analysis = analyzer.getSentiment(text);
+        avgAnalysis += analysis;
+      });
+      avgAnalysis = avgAnalysis / noStopWordsTexts.length;
+      // console.table(noStopWordsTexts)
+      return {status: "200", analysis: avgAnalysis};
+    }
+    catch(error){
+      return {status: "404", analysis: "Not Found"};
+    }
+  }
+}
 
-app.get('/', (req, res) => {
-    res.send('API is working!')
-})
+async function getSentimentSubreddit(query) {
+  if (query.includes(" ")) {
+    query = query.replace(" ", "+");
+  }
+  const subreddit = query;
+  const url =
+    "https://social-scraper-one.vercel.app/api/reddit/subreddit/" + subreddit;
+  const response = await getSentiment(query, url);
+  return response;
+}
 
-app.get('/api/reddit/subreddit/:subreddit', (req, res) => {
-    const subreddit = req.params.subreddit
-    const url = 'https://social-scraper-one.vercel.app/api/reddit/subreddit/' + subreddit
-    axios.get(url,{headers: { "Accept-Encoding": "gzip,deflate,compress" }} )
-    .then(response => {
-        const texts = response.data.map(post => post.title)
-        const lexedTexts = texts.map(text => aposToLexForm(text))
-        const casedTexts = lexedTexts.map(text => text.toLowerCase()) 
-        const alphaOnlyTexts = casedTexts.map(text => text.replace(/[^a-zA-Z\s]+/g, ''))
-        // console.table(alphaOnlyTexts)
-        const { WordTokenizer } = natural
-        const tokenizer = new WordTokenizer()
-        const tokenizedTexts = alphaOnlyTexts.map(text => tokenizer.tokenize(text))
-        tokenizedTexts.map(text => text.map(word => spellCheck.correct(word)))
-        const noStopWordsTexts = tokenizedTexts.map(text => stopWords.removeStopwords(text))
-        var avgAnalysis = 0
-        const analyzer = new natural.SentimentAnalyzer('English', natural.PorterStemmer, 'afinn')
-        noStopWordsTexts.forEach(text => {
-            const analysis = analyzer.getSentiment(text)
-            avgAnalysis += analysis
-        })
-        avgAnalysis = avgAnalysis / noStopWordsTexts.length
-        // console.table(noStopWordsTexts)
-        res.send({avgAnalysis})
-    })
-    .catch(error => {
-            res.send(error)
-        })
-})
+async function getSentimentRedditSearch(query) {
+  if (query.includes(" ")) {
+    query = query.replace(" ", "+");
+  }
+  const tags = query;
+  const url = "https://social-scraper-one.vercel.app/api/reddit/tags/" + tags;
+  const response = await getSentiment(query, url);
+  return response;
+}
 
-app.get('/api/reddit/:tag', (req, res) => {
-    const tags = req.params.tag
-    const url = 'https://social-scraper-one.vercel.app/api/reddit/tags/' + tags
-    axios.get(url,{headers: { "Accept-Encoding": "gzip,deflate,compress" }} )
-    .then(response => {
-        const texts = response.data.map(post => post.title)
-        const lexedTexts = texts.map(text => aposToLexForm(text))
-        const casedTexts = lexedTexts.map(text => text.toLowerCase()) 
-        const alphaOnlyTexts = casedTexts.map(text => text.replace(/[^a-zA-Z\s]+/g, ''))
-        // console.table(alphaOnlyTexts)
-        const { WordTokenizer } = natural
-        const tokenizer = new WordTokenizer()
-        const tokenizedTexts = alphaOnlyTexts.map(text => tokenizer.tokenize(text))
-        tokenizedTexts.map(text => text.map(word => spellCheck.correct(word)))
-        const noStopWordsTexts = tokenizedTexts.map(text => stopWords.removeStopwords(text))
-        var avgAnalysis = 0
-        const analyzer = new natural.SentimentAnalyzer('English', natural.PorterStemmer, 'afinn')
-        noStopWordsTexts.forEach(text => {
-            const analysis = analyzer.getSentiment(text)
-            avgAnalysis += analysis
-        })
-        avgAnalysis = avgAnalysis / noStopWordsTexts.length
-        // console.table(noStopWordsTexts)
-        res.send({avgAnalysis})
-    })
-    .catch(error => {
-            res.send(error)
-        })
-})
+async function getSentimentStackoverflow(query) {
+  if (query.includes(" ")) {
+    query = query.replace(" ", "+");
+  }
+  const tags = query;
+  const url =
+    "https://social-scraper-one.vercel.app/api/stackoverflow/tags/" + tags;
+  const response = await getSentiment(query, url);
+  return response;
+}
 
-app.get('/api/stackoverflow/:tag', (req, res) => {
-    const tags = req.params.tag
-    const url = 'https://social-scraper-one.vercel.app/api/stackoverflow/tags/' + tags
-    axios.get(url,{headers: { "Accept-Encoding": "gzip,deflate,compress" }} )
-    .then(response => {
-        const texts = response.data.map(post => post.title)
-        const lexedTexts = texts.map(text => aposToLexForm(text))
-        const casedTexts = lexedTexts.map(text => text.toLowerCase()) 
-        const alphaOnlyTexts = casedTexts.map(text => text.replace(/[^a-zA-Z\s]+/g, ''))
-        // console.table(alphaOnlyTexts)
-        const { WordTokenizer } = natural
-        const tokenizer = new WordTokenizer()
-        const tokenizedTexts = alphaOnlyTexts.map(text => tokenizer.tokenize(text))
-        tokenizedTexts.map(text => text.map(word => spellCheck.correct(word)))
-        const noStopWordsTexts = tokenizedTexts.map(text => stopWords.removeStopwords(text))
-        var avgAnalysis = 0
-        const analyzer = new natural.SentimentAnalyzer('English', natural.PorterStemmer, 'afinn')
-        noStopWordsTexts.forEach(text => {
-            const analysis = analyzer.getSentiment(text)
-            avgAnalysis += analysis
-        })
-        avgAnalysis = avgAnalysis / noStopWordsTexts.length
-        // console.table(noStopWordsTexts)
-        res.send({avgAnalysis})
-    })
-    .catch(error => {
-            res.send(error)
-        })
-})
+async function getSentimentDuckduckgo(query) {
+  if (query.includes(" ")) {
+    query = query.replace(" ", "+");
+  }
+  console.log(query);
+  const tags = query;
+  const url = "https://social-scraper-one.vercel.app/api/duckduckgo/" + tags;
+  const response = await getSentiment(query, url);
+  return response;
+}
 
-app.get('/api/duckduckgo/:tag', (req, res) => {
-    const tags = req.params.tag
-    const url = 'https://social-scraper-one.vercel.app/api/duckduckgo/' + tags
-    axios.get(url,{headers: { "Accept-Encoding": "gzip,deflate,compress" }} )
-    .then(response => {
-        const texts = response.data.map(post => (post.title + " " + post.description))
-        const lexedTexts = texts.map(text => aposToLexForm(text))
-        const casedTexts = lexedTexts.map(text => text.toLowerCase()) 
-        const alphaOnlyTexts = casedTexts.map(text => text.replace(/[^a-zA-Z\s]+/g, ''))
-        // console.table(alphaOnlyTexts)
-        const { WordTokenizer } = natural
-        const tokenizer = new WordTokenizer()
-        const tokenizedTexts = alphaOnlyTexts.map(text => tokenizer.tokenize(text))
-        tokenizedTexts.map(text => text.map(word => spellCheck.correct(word)))
-        const noStopWordsTexts = tokenizedTexts.map(text => stopWords.removeStopwords(text))
-        var avgAnalysis = 0
-        const analyzer = new natural.SentimentAnalyzer('English', natural.PorterStemmer, 'afinn')
-        noStopWordsTexts.forEach(text => {
-            const analysis = analyzer.getSentiment(text)
-            avgAnalysis += analysis
-        })
-        avgAnalysis = avgAnalysis / noStopWordsTexts.length
-        // console.table(noStopWordsTexts)
-        res.send({avgAnalysis})
-    })
-    .catch(error => {
-            res.send(error)
-        })
-})
-
-
-// listen for requests
-app.listen(port, () => {
-    console.log(`Server is listening on port ${port}`)
-})
+module.exports = {
+  getSentiment,
+  getSentimentRedditSearch,
+  getSentimentSubreddit,
+  getSentimentStackoverflow,
+  getSentimentDuckduckgo,
+};
