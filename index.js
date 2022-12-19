@@ -143,7 +143,7 @@ app.get("/api/stackoverflow/:query", async (req, res) => {
 app.get("/api/duckduckgo/:query", async (req, res) => {
   const query = req.params.query;
   const url =
-    "https://social-scraper-one.vercel.app/api/duckduckgo/tags/" + query;
+    "https://social-scraper-one.vercel.app/api/duckduckgo/" + query;
   axios
     .get(url, { headers: { "Accept-Encoding": "gzip,deflate,compress" } })
     .then((response) => {
