@@ -1,6 +1,6 @@
 {
   "name": "social-sentiment",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "description": "A sentiment analysis API which scrapes social media for you and returns the social sentiment of a keyword.",
   "main": "index.js",
   "scripts": {
