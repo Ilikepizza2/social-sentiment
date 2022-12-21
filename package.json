@@ -1,7 +1,7 @@
 {
   "name": "social-sentiment",
   "version": "1.5.3",
-  "description": "",
+  "description": "A sentiment analysis API which scrapes social media for you and returns the social sentiment of a keyword.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -12,7 +12,13 @@
     "url": "git+https://github.com/Ilikepizza2/social-sentiment.git"
   },
   "keywords": [
-    "social-sentiment"
+    "social-sentiment",
+    "social",
+    "media",
+    "sentiment",
+    "analysis",
+    "scraper",
+    "API"
   ],
   "author": "Ilikepizza2",
   "license": "ISC",
